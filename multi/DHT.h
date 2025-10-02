@@ -1,11 +1,16 @@
 /***
- *** Filename    : DHT.hpp
- *** Description : DHT Temperature & Humidity Sensor library for Raspberry.
- ***               Used for Raspberry Pi.
- ***               Program transplantation by Freenove.
- *** Author      : freenove
- *** modification: 2020/10/16
- *** Reference   : https://github.com/RobTillaart/Arduino/tree/master/libraries/DHTlib
+ *** Filename    : DHT.h
+ *** Description : C libDHT multiple sensor library
+ ***               Made to substitute for the C++ DHT code in the Freenove tutorial
+ *** Author      : Matthew Haas
+ *** modification: 2025/10/02
+ *** Reference   : https://www.uugear.com/
+ ***                   portfolio/dht11-humidity-temperature-sensor-module/
+ ***               https://github.com/
+ ***                   Qengineering/DHT22-Raspberry-Pi
+ ***                   Freenove/Freenove_Ultimate_Starter_Kit_for_Raspberry_Pi/
+ ***                       tree/master/Code/C_Code/21.1.1_DHT11
+ ***                   RobTillaart/Arduino/tree/master/libraries/DHTlib
  ***
  **************************************************************************************/
 
@@ -36,50 +41,18 @@
 typedef struct dht DHT;
 struct dht
 {
-	double   humidity;
-	double   temperature;
-	uint8_t  bits[5];
-	DHT *   (*init_DHT)      (DHT *);
-	int     (*readDHT)       (DHT *, int);
-	int     (*readDHTOnce)   (DHT *, int);
-	int     (*readSensor)    (DHT *, int, int);
+    float    celcius;
+    float    fahrenheit;
+    float    humidity;
+    uint8_t  byte[5];
+    uint8_t  cached;
+    uint8_t *checksum;
+    uint8_t  gpio_pin;
+    uint8_t  type;
+    int     (*read) (DHT **, uint8_t, uint8_t);
 };
 
-typedef struct dht DHT;
-struct dht
-{
-    float     celcius;
-    float     fahrenheit;
-    float     humidity;
-    uint8_t   cached;
-    uint8_t  *checksum;
-    uint8_t   gpio_pin;
-    uint8_t   type;
-    uint16_t  byte[5];
-};
-
-DHT *init_DHT11    (DHT *);
-int  readDHT11Once (DHT *, int);
-int  readDHT11     (DHT *, int);
-
-DHT *init_DHT22    (DHT *);
-int  readDHT22Once (DHT *, int);
-int  readDHT22     (DHT *, int);
-
-void DHT_init      (DHT **, uint8_t, uint8_t);
-int  read_DHT_data (DHT **);
-/*
-class DHT{      
-    public:
-        DHT();
-        double humidity,temperature;    //use to store temperature and humidity data read
-        int readDHT11Once(int pin);     //read DHT11
-        int readDHT11(int pin);     //read DHT11
-    private:
-        uint8_t bits[5];    //Buffer to receiver data
-        int readSensor(int pin,int wakeupDelay);    //
-};
-*/
-
+int  DHT_init (DHT **, uint8_t, uint8_t);
+int  DHT_read (DHT **);
 
 #endif

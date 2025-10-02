@@ -12,7 +12,7 @@
 //
 // Initialize a DHT instance, associating pin with type of component
 //
-void DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
+int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
 {
     ////////////////////////////////////////////////////////////////////////////////////
     //
@@ -49,6 +49,13 @@ void DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
         (*sensor) -> checksum      = &((*sensor) -> data[4]);
         (*sensor) -> gpio_pin      = pin;
         (*sensor) -> type          = type;
+		(*sensor) -> read          = &DHT_read;
+};
+
+int  DHT_init (DHT **, uint8_t, uint8_t);
+int  DHT_read (DHT **);
+
+#endif
     }
     else
     {
@@ -70,7 +77,7 @@ void DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
 //
 // The complete data tranmission is 40-bits. Higher order bits sent first.
 //
-int  read_DHT_data (DHT **sensor)
+int  DHT_read (DHT **sensor)
 {
     ////////////////////////////////////////////////////////////////////////////////////
     //

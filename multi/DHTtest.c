@@ -27,7 +27,7 @@ int main (void)
 
     while (1)
     {
-        read_DHT_data (&DHT11);
+        DHT11 -> read (&DHT11);
 
         if (DHT11 -> cached       == TRUE)
         {
@@ -38,7 +38,7 @@ int main (void)
         fprintf (stdout, "Temperature = %.1f *C ",        DHT11 -> celcius);
         fprintf (stdout, "(%.1f *F)\n",                   DHT11 -> fahrenheit);
 
-        read_DHT_data (&DHT22);
+        DHT22 -> read (&DHT22);
 
         if (DHT22 -> cached       == TRUE)
         {
