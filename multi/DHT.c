@@ -2,11 +2,10 @@
  *  dht.c:
  *    read temperature and humidity from DHT11 or DHT22 sensor
  */
-#include <wiringPi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <DHT.h>
+#include "DHT.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -14,6 +13,8 @@
 //
 int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
 {
+    int  status                    = DHTLIB_OK;
+
     ////////////////////////////////////////////////////////////////////////////////////
     //
     // If NULL was passed into function, do nothing.
@@ -21,7 +22,7 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
     if (sensor                    == NULL)
     {
         fprintf (stderr, "[DHT] ERROR: initializing NULL\n");
-        exit (1);
+        status                     = DHTLIB_INVALID_VALUE;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -29,7 +30,7 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
     // Ideal conditions: an existing pointer (set to NULL) is passed in; allocate
     //                   memory and initialize to defaults.
     //
-    if ((*sensor)                 == NULL)
+    else if ((*sensor)            == NULL)
     {
         (*sensor)                  = (DHT *) malloc (sizeof (DHT));
         if ((*sensor)             == NULL)
@@ -46,26 +47,24 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
         (*sensor) -> celcius       = 0.0;
         (*sensor) -> fahrenheit    = 0.0;
         (*sensor) -> humidity      = 0.0;
-        (*sensor) -> checksum      = &((*sensor) -> data[4]);
+        (*sensor) -> checksum      = &((*sensor) -> byte[4]);
         (*sensor) -> gpio_pin      = pin;
         (*sensor) -> type          = type;
-		(*sensor) -> read          = &DHT_read;
-};
-
-int  DHT_init (DHT **, uint8_t, uint8_t);
-int  DHT_read (DHT **);
-
-#endif
+        (*sensor) -> read          = &DHT_read;
+        status                     = DHTLIB_OK;
     }
     else
     {
         fprintf (stderr, "[DHT] ERROR: DHT instance already exists (no action)\n");
+        status                     = DHTLIB_ERROR_ALLOC;
     }
+
+    return (status);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-// read_dht_data(): function to prime the sensor and read in the data bits.
+// DHT_read(): function to prime the sensor and read in the data bits.
 //
 // DHTxx Single-bus serial data format (40 bits, 5 total bytes, takes ~4ms).
 //
@@ -90,8 +89,8 @@ int  DHT_read (DHT **sensor)
     uint8_t   counter              = 0;
     uint8_t   currentstate         = HIGH;
     uint8_t   decimal              = 0;
-    uint8_t   integral             = 0;
-    uint8_t   laststate            = HIGH;
+    uint16_t  integral             = 0;
+    uint16_t  laststate            = HIGH;
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
@@ -146,11 +145,11 @@ int  DHT_read (DHT **sensor)
             ((index % 2)          == 0))
         {
             /* shove each bit into the storage bytes */
-            byte[bit / 8]          = byte[bit / 8] << 1;
+            (*sensor) -> byte[bit / 8]  = (*sensor) -> byte[bit / 8] << 1;
 
             if (counter           >  16)
             {
-                byte[bit / 8]      = byte[bit / 8] | 1;
+                (*sensor) -> byte[bit / 8]  = (*sensor) -> byte[bit / 8] | 1;
             }
 
             bit                    = bit + 1;
@@ -174,7 +173,7 @@ int  DHT_read (DHT **sensor)
     // if a match, display the sensor information.
     //
     if ((bit                      >= 40) &&
-        ((*sensor) -> checksum    == checksum))
+        ((*(*sensor) -> checksum) == checksum))
     {
         ////////////////////////////////////////////////////////////////////////////////
         //
@@ -233,6 +232,7 @@ int  DHT_read (DHT **sensor)
         //         on cached data from a previous run.
         //
         (*sensor) -> cached        = FALSE;
+        status                     = DHTLIB_OK;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -246,5 +246,8 @@ int  DHT_read (DHT **sensor)
         // CACHED: The read attempt fell through, utilize existing, cached data.
         //
         (*sensor) -> cached        = TRUE;
+        status                     = DHTLIB_ERROR_CHECKSUM;
     }
+
+    return (status);
 }

@@ -25,12 +25,11 @@
 #define  MAX_TIMINGS             85
 #define  SENSOR_TYPE_DHT11        0
 #define  SENSOR_TYPE_DHT22        1
-#define  TRUE                     1
-#define  FALSE                    0
 
 #define  DHTLIB_OK                0
 #define  DHTLIB_ERROR_CHECKSUM   -1
 #define  DHTLIB_ERROR_TIMEOUT    -2
+#define  DHTLIB_ERROR_ALLOC      -3
 #define  DHTLIB_INVALID_VALUE  -999
 
 #define  DHTLIB_DHT11_WAKEUP     20
@@ -41,15 +40,15 @@
 typedef struct dht DHT;
 struct dht
 {
-    float    celcius;
-    float    fahrenheit;
-    float    humidity;
-    uint8_t  byte[5];
-    uint8_t  cached;
-    uint8_t *checksum;
-    uint8_t  gpio_pin;
-    uint8_t  type;
-    int     (*read) (DHT **, uint8_t, uint8_t);
+    float     celcius;
+    float     fahrenheit;
+    float     humidity;
+    uint16_t  byte[5];
+    uint16_t *checksum;
+    uint8_t   cached;
+    uint8_t   gpio_pin;
+    uint8_t   type;
+    int      (*read) (DHT **);
 };
 
 int  DHT_init (DHT **, uint8_t, uint8_t);
