@@ -17,16 +17,21 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-////read return flag of sensor
-#define DHTLIB_OK               0
-#define DHTLIB_ERROR_CHECKSUM   -1
-#define DHTLIB_ERROR_TIMEOUT    -2
-#define DHTLIB_INVALID_VALUE    -999
+#define  MAX_TIMINGS             85
+#define  SENSOR_TYPE_DHT11        0
+#define  SENSOR_TYPE_DHT22        1
+#define  TRUE                     1
+#define  FALSE                    0
 
-#define DHTLIB_DHT11_WAKEUP     20
-#define DHTLIB_DHT_WAKEUP       1
+#define  DHTLIB_OK                0
+#define  DHTLIB_ERROR_CHECKSUM   -1
+#define  DHTLIB_ERROR_TIMEOUT    -2
+#define  DHTLIB_INVALID_VALUE  -999
 
-#define DHTLIB_TIMEOUT          100
+#define  DHTLIB_DHT11_WAKEUP     20
+#define  DHTLIB_DHT_WAKEUP        1
+
+#define  DHTLIB_TIMEOUT         100
 
 typedef struct dht DHT;
 struct dht
@@ -40,6 +45,19 @@ struct dht
 	int     (*readSensor)    (DHT *, int, int);
 };
 
+typedef struct dht DHT;
+struct dht
+{
+    float     celcius;
+    float     fahrenheit;
+    float     humidity;
+    uint8_t   cached;
+    uint8_t  *checksum;
+    uint8_t   gpio_pin;
+    uint8_t   type;
+    uint16_t  byte[5];
+};
+
 DHT *init_DHT11    (DHT *);
 int  readDHT11Once (DHT *, int);
 int  readDHT11     (DHT *, int);
@@ -48,6 +66,8 @@ DHT *init_DHT22    (DHT *);
 int  readDHT22Once (DHT *, int);
 int  readDHT22     (DHT *, int);
 
+void DHT_init      (DHT **, uint8_t, uint8_t);
+int  read_DHT_data (DHT **);
 /*
 class DHT{      
     public:
@@ -58,9 +78,7 @@ class DHT{
     private:
         uint8_t bits[5];    //Buffer to receiver data
         int readSensor(int pin,int wakeupDelay);    //
-        
 };
-
 */
 
 
