@@ -13,16 +13,16 @@
 //
 int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
 {
-    int  status                    = DHTLIB_OK;
+    int  status                     = DHTLIB_OK;
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
     // If NULL was passed into function, do nothing.
     //
-    if (sensor                    == NULL)
+    if (sensor                     == NULL)
     {
         fprintf (stderr, "[DHT] ERROR: initializing NULL\n");
-        status                     = DHTLIB_INVALID_VALUE;
+        status                      = DHTLIB_INVALID_VALUE;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -30,10 +30,10 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
     // Ideal conditions: an existing pointer (set to NULL) is passed in; allocate
     //                   memory and initialize to defaults.
     //
-    else if ((*sensor)            == NULL)
+    else if ((*sensor)             == NULL)
     {
-        (*sensor)                  = (DHT *) malloc (sizeof (DHT));
-        if ((*sensor)             == NULL)
+        (*sensor)                   = (DHT *) malloc (sizeof (DHT));
+        if ((*sensor)              == NULL)
         {
             fprintf (stderr, "[DHT] ERROR allocating memory for DHT instance\n");
             exit (1);
@@ -43,20 +43,20 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
         //
         // Establish default values for DHT attributes
         //
-        (*sensor) -> cached        = FALSE;
-        (*sensor) -> celcius       = 0.0;
-        (*sensor) -> fahrenheit    = 0.0;
-        (*sensor) -> humidity      = 0.0;
-        (*sensor) -> checksum      = &((*sensor) -> byte[4]);
-        (*sensor) -> gpio_pin      = pin;
-        (*sensor) -> type          = type;
-        (*sensor) -> read          = &DHT_read;
-        status                     = DHTLIB_OK;
+        (*sensor) -> cached         = FALSE;
+        (*sensor) -> celcius        = 0.0;
+        (*sensor) -> fahrenheit     = 0.0;
+        (*sensor) -> humidity       = 0.0;
+        (*sensor) -> checksum       = &((*sensor) -> byte[4]);
+        (*sensor) -> gpio_pin       = pin;
+        (*sensor) -> type           = type;
+        (*sensor) -> read           = &DHT_read;
+        status                      = DHTLIB_OK;
     }
     else
     {
         fprintf (stderr, "[DHT] ERROR: DHT instance already exists (no action)\n");
-        status                     = DHTLIB_ERROR_ALLOC;
+        status                      = DHTLIB_ERROR_ALLOC;
     }
 
     return (status);
@@ -82,15 +82,18 @@ int  DHT_read (DHT **sensor)
     //
     // Declare and initialize pertinent variables
     //
-    int       index                = 0;
-    int       status               = 0;
-    uint8_t   bit                  = 0;
-    uint8_t   checksum             = 0;
-    uint8_t   counter              = 0;
-    uint8_t   currentstate         = HIGH;
-    uint8_t   decimal              = 0;
-    uint16_t  integral             = 0;
-    uint16_t  laststate            = HIGH;
+    int       index                       = 0;
+    int       status                      = 0;
+    int       uSec                        = 0;
+    uint8_t   bit                         = 0;
+    uint8_t   checksum                    = 0;
+    uint8_t   counter                     = 0;
+    uint8_t   currentstate                = HIGH;
+    uint8_t   decimal                     = 0;
+    uint16_t  integral                    = 0;
+    uint16_t  laststate                   = HIGH;
+    TIMESPEC  start;
+    TIMESPEC  current;
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
@@ -98,16 +101,44 @@ int  DHT_read (DHT **sensor)
     //
     for (index = 0; index < 5; index++)
     {
-        (*sensor) -> byte[index]   = 0;
+        (*sensor) -> byte[index]          = 0;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
-    // Prime the sensor: pull pin down for 18 milliseconds
+    // Before reading the data, we must signal the sensor to initiate a data stream.
+    // This process involves pulling the pin up and down for various lengths of time,
+    // requiring three distinct states for specified amounts of time:
+    //
+    // 1. pull pin up for 10 milliseconds
+    // 2. pull pin down for 18 milliseconds
+    // 3. pull pin up for 40 microseconds
+    //
+    // After which, we can put the pin in INPUT mode and commence the reading process.
+    //
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Step 1: pull pin up for 10 milliseconds
     //
     pinMode ((*sensor) -> gpio_pin, OUTPUT);
+    digitalWrite ((*sensor) -> gpio_pin, HIGH);
+    delay (10);
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Step 2: pull pin down for 18 milliseconds
+    //
     digitalWrite ((*sensor) -> gpio_pin, LOW);
     delay (18);
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Step 3: pull pin up for 40 microseconds (initial preparation done)
+    //
+    digitalWrite ((*sensor) -> gpio_pin, HIGH);
+    delayMicroseconds (40);
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
@@ -115,6 +146,44 @@ int  DHT_read (DHT **sensor)
     //
     pinMode ((*sensor) -> gpio_pin, INPUT);
 
+    /////////////////////////////////read code start
+    
+	/*
+    // Read data from sensor.
+    for(index = 0; (index < MAX_TIMINGS) && (uSec < 255); index++)
+    {
+        clock_gettime (CLOCK_REALTIME, &st);
+        currentstate                      = digitalRead ((*sensor) -> gpio_pin);
+        while ((currentstate             == laststate) &&
+               (uSec                     <  255) )
+        {
+            clock_gettime (CLOCK_REALTIME, &cur);
+            uSec                          = ((cur.tv_sec - st.tv_sec) * 1000000); // elapsed microsecs
+            uSec                          = usec + ((cur.tv_nsec - st.tv_nsec) / 1000); // elapsed microsecs
+			currentstate                  = digitalRead ((*sensor) -> gpio_pin);
+        }
+
+        laststate                         = digitalRead ((*sensor) -> gpio_pin);
+
+        // First 2 state changes are sensor signaling ready to send, ignore them.
+        // Each bit is preceeded by a state change to mark its beginning, ignore it too.
+        if ((index                       >  2) &&
+            ((index % 2)                 == 0))
+        {
+            // Each array element has 8 bits.  Shift Left 1 bit.
+            (*sensor) -> byte[bit/8]      = (*sensor) -> byte[bit/8] << 1;
+            // A State Change > 35 µS is a '1'.
+            if(uSec                      >  35)
+            {
+                (*sensor) -> byte[bit/8]  = (*sensor) -> byte[bit/8] | 0x00000001;
+            }
+
+            bit                           = bit + 1;
+        }
+    }
+    /////////////////////////////////read code stop
+	*/
+    
     ////////////////////////////////////////////////////////////////////////////////////
     //
     // Detect any change and read in the data
@@ -131,6 +200,7 @@ int  DHT_read (DHT **sensor)
             {
                 break;
             }
+            currentstate           = digitalRead ((*sensor) -> gpio_pin);
         }
 
         laststate                  = digitalRead ((*sensor) -> gpio_pin);

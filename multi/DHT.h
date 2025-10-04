@@ -37,7 +37,8 @@
 
 #define  DHTLIB_TIMEOUT         100
 
-typedef struct dht DHT;
+typedef struct timespec TIMESPEC;
+typedef struct dht      DHT;
 struct dht
 {
     float     celcius;
