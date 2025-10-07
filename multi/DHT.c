@@ -147,16 +147,16 @@ int  DHT_read (DHT **sensor)
     //
     // Declare and initialize pertinent variables
     //
-    int       index                       = 0;
-    int       status                      = 0;
-    int       uSec                        = 0;
-    uint8_t   bit                         = 0;
-    uint8_t   checksum                    = 0;
-    uint8_t   counter                     = 0;
-    uint8_t   currentstate                = HIGH;
-    uint8_t   decimal                     = 0;
-    uint16_t  integral                    = 0;
-    uint16_t  laststate                   = HIGH;
+    int       index                         = 0;
+    int       status                        = 0;
+    int       uSec                          = 0;
+    uint8_t   bit                           = 0;
+    uint8_t   checksum                      = 0;
+    uint8_t   counter                       = 0;
+    uint8_t   currentstate                  = HIGH;
+    uint8_t   decimal                       = 0;
+    uint16_t  integral                      = 0;
+    uint16_t  laststate                     = HIGH;
     TIMESPEC  start;
     TIMESPEC  current;
 
@@ -166,30 +166,19 @@ int  DHT_read (DHT **sensor)
     //
     for (index = 0; index < 5; index++)
     {
-        (*sensor) -> byte[index]          = 0;
+        (*sensor) -> byte[index]            = 0;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
-    // Pu
+    // Initiate a pulse sequence to enable a data read
     //
     pinMode ((*sensor) -> gpio_pin, OUTPUT);
-    digitalWrite ((*sensor) -> gpio_pin, HIGH);
-    delay (10);
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Step 2: pull pin down for 18 milliseconds
-    //
-    digitalWrite ((*sensor) -> gpio_pin, LOW);
-    delay (18);
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Step 3: pull pin up for 40 microseconds (initial preparation done)
-    //
-    digitalWrite ((*sensor) -> gpio_pin, HIGH);
-    delayMicroseconds (40);
+    for (index = 0; index < (*sensor) -> pulses; index++)
+    {
+        digitalWrite ((*sensor) -> gpio_pin, (*sensor) -> signal.state);
+        delayMicroseconds ((*sensor) -> signal.timing);
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
@@ -241,39 +230,49 @@ int  DHT_read (DHT **sensor)
     //
     for (index = 0; index <  MAX_TIMINGS; index++)
     {
-        counter                    = 0;
-        currentstate               = digitalRead ((*sensor) -> gpio_pin);
-        while (currentstate       == laststate)
+        counter                             = 0;
+        currentstate                        = digitalRead ((*sensor) -> gpio_pin);
+        while ((currentstate               == laststate) &&
+               (counter                    != 255))
         {
-            counter                = counter + 1;
             delayMicroseconds (1);
-            if (counter           == 255)
-            {
-                break;
-            }
-            currentstate           = digitalRead ((*sensor) -> gpio_pin);
+            currentstate                    = digitalRead ((*sensor) -> gpio_pin);
+            counter                         = counter + 1;
         }
 
-        laststate                  = digitalRead ((*sensor) -> gpio_pin);
+        laststate                           = digitalRead ((*sensor) -> gpio_pin);
 
-        if (counter               == 255)
+        if (counter                        == 255)
         {
             break;
         }
 
-        /* ignore first 3 transitions */
-        if ((index                >= 4) &&
-            ((index % 2)          == 0))
+        ////////////////////////////////////////////////////////////////////////////////
+        //
+        // Per device specifications, ignore the initial 3 transitions, and then only
+        // process every other even state obtained
+        //
+        if ((index                         >= 4) &&
+            ((index % 2)                   == 0))
         {
-            /* shove each bit into the storage bytes */
-            (*sensor) -> byte[bit / 8]  = (*sensor) -> byte[bit / 8] << 1;
+            ////////////////////////////////////////////////////////////////////////////
+            //
+            // Store each validly-obtained bit into position in the current element
+            // of the sensor's byte array
+            //
+            (*sensor) -> byte[bit / 8]      = (*sensor) -> byte[bit / 8] << 1;
 
-            if (counter           >  16)
+            if (counter                    >  16)
             {
                 (*sensor) -> byte[bit / 8]  = (*sensor) -> byte[bit / 8] | 1;
             }
 
-            bit                    = bit + 1;
+            ////////////////////////////////////////////////////////////////////////////
+            //
+            // This constitutes a successful bit retrieved, out of the 40-bits in the
+            // payload
+            //
+            bit                             = bit + 1;
         }
     }
 
