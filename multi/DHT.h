@@ -22,6 +22,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define  TIMING                   0
+#define  STATE                    1
+
 #define  MAX_TIMINGS             85
 #define  SENSOR_TYPE_DHT11        0
 #define  SENSOR_TYPE_DHT22        1
@@ -37,8 +40,16 @@
 
 #define  DHTLIB_TIMEOUT         100
 
-typedef struct timespec TIMESPEC;
 typedef struct dht      DHT;
+typedef struct pulse    Pulse;
+typedef struct timespec TIMESPEC;
+
+struct pulse
+{
+    int       timing;
+    int       state;
+};
+
 struct dht
 {
     float     celcius;
@@ -49,6 +60,8 @@ struct dht
     uint8_t   cached;
     uint8_t   gpio_pin;
     uint8_t   type;
+    uint8_t   pulses;
+    Pulse    *signal;
     int      (*read) (DHT **);
 };
 
