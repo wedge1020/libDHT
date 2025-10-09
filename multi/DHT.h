@@ -40,16 +40,29 @@
 
 #define  DHTLIB_TIMEOUT         100
 
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Establish typedef aliases (for shorter lines)
+//
 typedef struct dht      DHT;
 typedef struct pulse    Pulse;
 typedef struct timespec TIMESPEC;
 
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Pulse struct, to handle initialization signal sequences to sensor
+//
 struct pulse
 {
     int       timing;
     int       state;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// dht sensor struct: contains information related to the sensor and its
+// operations
+//
 struct dht
 {
     float     celcius;
@@ -65,6 +78,10 @@ struct dht
     int      (*read) (DHT **);
 };
 
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// DHT sensor functions (initialize, read)
+//
 int  DHT_init (DHT **, uint8_t, uint8_t);
 int  DHT_read (DHT **);
 

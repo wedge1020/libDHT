@@ -13,7 +13,6 @@
 //
 int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
 {
-    int  index                             = 0;
     int  len                               = 0;
     int  status                            = DHTLIB_OK;
 
@@ -64,8 +63,11 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
         // 1. pull pin up for 10 milliseconds (10000 microseconds)
         // 2. pull pin down for 18 milliseconds (18000 microseconds)
         // 3. pull pin up for 40 microseconds
+        // 4. sensor pull pin down for 80 microseconds
+        // 5. Sensor pulls pin up for 80 microseconds
         //
-        // After which, the pin is placed in INPUT mode reading begins.
+        // After which, make sure the pin is placed in INPUT mode for reading, as
+        // actual transmission begins
         //
         ////////////////////////////////////////////////////////////////////////////////
 
@@ -95,11 +97,28 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
 
         ////////////////////////////////////////////////////////////////////////////////
         //
+        // DHT22:
+        //
+        // Before reading the data, we signal the sensor to initiate a data stream.
+        // This process involves pulling the pin up and down for prescribed times,
+        // requiring two distinct states for specified amounts of time:
+        //
+        // 1. host pulls pin down for at least 1 millisecond (1000 microseconds)
+        // 2. host pulls pin up for 20-40 microseconds
+        // 3. sensor pull pin down for 80 microseconds
+        // 4. Sensor pulls pin up for 80 microseconds
+        //
+        // After which, data transmission commences.
+        //
+        ////////////////////////////////////////////////////////////////////////////////
+
+        ////////////////////////////////////////////////////////////////////////////////
+        //
         // Establish signal protocol for DHT22 sensor
         //
         else
         {
-            (*sensor) -> pulses            = 2;
+            (*sensor) -> pulses            = 3;
 
             len                            = sizeof (Pulse) * (*sensor) -> pulses;
             (*sensor) -> signal            = (Pulse *) malloc (len);
@@ -109,10 +128,12 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
                 exit (2);
             }
 
-            (*sensor) -> signal[0].timing  = 1000;
-            (*sensor) -> signal[0].state   = LOW;
-            (*sensor) -> signal[1].timing  = 40;
-            (*sensor) -> signal[1].state   = HIGH;
+            (*sensor) -> signal[0].timing  = 1;
+            (*sensor) -> signal[0].state   = HIGH;
+            (*sensor) -> signal[1].timing  = 2000;
+            (*sensor) -> signal[1].state   = LOW;
+            (*sensor) -> signal[2].timing  = 30;
+            (*sensor) -> signal[2].state   = HIGH;
         }
 
         (*sensor) -> read                  = &DHT_read;
@@ -149,7 +170,7 @@ int  DHT_read (DHT **sensor)
     //
     int       index                         = 0;
     int       status                        = 0;
-    int       uSec                          = 0;
+    //int       uSec                          = 0;
     uint8_t   bit                           = 0;
     uint8_t   checksum                      = 0;
     uint8_t   counter                       = 0;
@@ -157,8 +178,8 @@ int  DHT_read (DHT **sensor)
     uint8_t   decimal                       = 0;
     uint16_t  integral                      = 0;
     uint16_t  laststate                     = HIGH;
-    TIMESPEC  start;
-    TIMESPEC  current;
+    //TIMESPEC  start;
+    //TIMESPEC  current;
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
@@ -176,14 +197,15 @@ int  DHT_read (DHT **sensor)
     pinMode ((*sensor) -> gpio_pin, OUTPUT);
     for (index = 0; index < (*sensor) -> pulses; index++)
     {
-        digitalWrite ((*sensor) -> gpio_pin, (*sensor) -> signal.state);
-        delayMicroseconds ((*sensor) -> signal.timing);
+        digitalWrite ((*sensor) -> gpio_pin, (*sensor) -> signal[index].state);
+        delayMicroseconds ((*sensor) -> signal[index].timing);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
     // Prepare to read the pin (switch to input mode)
     //
+    digitalWrite ((*sensor) -> gpio_pin, LOW);
     pinMode ((*sensor) -> gpio_pin, INPUT);
 
     /////////////////////////////////read code start
