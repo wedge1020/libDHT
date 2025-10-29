@@ -1,19 +1,26 @@
-/*
- *  dht.c:
- *    read temperature and humidity from DHT11 or DHT22 sensor
- */
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+//
+//  dht.c:
+//    read temperature and humidity from DHT11 or DHT22 sensor
+//
+////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Pre-processor directives
+//
 #include "DHT.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //
 // Initialize the DHT instance (sensor), associating pin with type of component
 //
-int  DHT_init (uint8_t pin, uint8_t type)
+int32_t  DHT_init (uint8_t  pin, uint8_t  type)
 {
-    int  status                    = DHTLIB_OK;
+    ////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Declare and initialize local variables: init return status
+    //
+    int32_t  status                = DHTLIB_OK;
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
@@ -66,14 +73,14 @@ int  DHT_init (uint8_t pin, uint8_t type)
 //
 // The complete data tranmission is 40-bits. Higher order bits sent first.
 //
-int  DHT_read (void)
+int32_t  DHT_read (void)
 {
     ////////////////////////////////////////////////////////////////////////////////////
     //
     // Declare and initialize pertinent variables
     //
-    int       index                = 0;
-    int       status               = 0;
+    int32_t   index                = 0;
+    int32_t   status               = 0;
     uint8_t   bit                  = 0;
     uint8_t   checksum             = 0;
     uint8_t   counter              = 0;
@@ -130,11 +137,18 @@ int  DHT_read (void)
             break;
         }
 
-        /* ignore first 3 transitions */
+        ////////////////////////////////////////////////////////////////////////////////
+        //
+        // Per the spec, ignore the first three transitions
+        //
         if ((index                      >= 4) &&
             ((index % 2)                == 0))
         {
-            /* shove each bit into the storage bytes */
+            ////////////////////////////////////////////////////////////////////////////
+            //
+            // Serial transfer from the sensor: store each bit in its appropriate
+            // position in the storage byte
+            //
             sensor -> byte[bit / 8]      = sensor -> byte[bit / 8] << 1;
 
             if (counter                 >  16)
@@ -163,15 +177,15 @@ int  DHT_read (void)
     // if a match, display the sensor information.
     //
     if ((bit                            >= 40) &&
-        ((*sensor -> checksum)          == checksum))
+        ((*sensor  -> checksum)         == checksum))
     {
         ////////////////////////////////////////////////////////////////////////////////
         //
         // HUMIDITY: Obtain integral and decimal bytes and determine the value
         //
-        integral                         = sensor  -> byte[0] << 8;
-        decimal                          = (sensor -> byte[1]) / 10;
-        sensor -> humidity               = (float) (integral + decimal);
+        integral                         = sensor   -> byte[0] << 8;
+        decimal                          = (sensor  -> byte[1]) / 10;
+        sensor     -> humidity           = (float) (integral + decimal);
 
         ////////////////////////////////////////////////////////////////////////////////
         //
@@ -179,7 +193,7 @@ int  DHT_read (void)
         //
         if (sensor -> humidity          >  100)
         {
-            sensor -> humidity           = sensor -> byte[0];
+            sensor -> humidity           = sensor   -> byte[0];
         }
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -189,7 +203,7 @@ int  DHT_read (void)
         //
         integral                         = ((sensor -> byte[2]) & 0x7F) << 8;
         decimal                          = (sensor  -> byte[3]) / 10;
-        sensor -> celcius                = (float) (integral + decimal);
+        sensor     -> celcius            = (float) (integral + decimal);
 
         ////////////////////////////////////////////////////////////////////////////////
         //
@@ -197,7 +211,7 @@ int  DHT_read (void)
         //
         if (sensor -> celcius           >  125)
         {
-            sensor -> celcius            = sensor -> byte[2];
+            sensor -> celcius            = sensor   -> byte[2];
         }
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -207,21 +221,21 @@ int  DHT_read (void)
         //
         if (sensor -> byte[2] & 0x80)
         {
-            sensor -> celcius            = sensor -> celcius * -1;
+            sensor -> celcius            = sensor   -> celcius * -1;
         }
 
         ////////////////////////////////////////////////////////////////////////////////
         //
         // TEMPERATURE: Convert from celcius to fahrenheit
         //
-        sensor -> fahrenheit             = sensor -> celcius * 1.8f + 32;
+        sensor     -> fahrenheit         = sensor   -> celcius * 1.8f + 32;
 
         ////////////////////////////////////////////////////////////////////////////////
         //
         // CACHED: This was considered a successful read, so there is no need to rely
         //         on cached data from a previous run.
         //
-        sensor -> cached                 = FALSE;
+        sensor     -> cached             = FALSE;
         status                           = DHTLIB_OK;
     }
 
@@ -235,7 +249,7 @@ int  DHT_read (void)
         //
         // CACHED: The read attempt fell through, utilize existing, cached data.
         //
-        sensor -> cached                 = TRUE;
+        sensor     -> cached             = TRUE;
         status                           = DHTLIB_ERROR_CHECKSUM;
     }
 
