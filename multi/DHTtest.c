@@ -33,6 +33,10 @@ int main (void)
         {
             fprintf (stdout, "[cached] ");
         }
+        else
+        {
+            fprintf (stdout, "         ");
+        }
 
         fprintf (stdout, "DHT11: Humidity = %.1f %% ",    DHT11 -> humidity);
         fprintf (stdout, "Temperature = %.1f *C ",        DHT11 -> celcius);
@@ -44,10 +48,16 @@ int main (void)
         {
             fprintf (stdout, "[cached] ");
         }
+        else
+        {
+            fprintf (stdout, "         ");
+        }
 
         fprintf (stdout, "DHT22: Humidity = %.1f %% ",    DHT22 -> humidity);
         fprintf (stdout, "Temperature = %.1f *C ",        DHT22 -> celcius);
         fprintf (stdout, "(%.1f *F)\n",                   DHT22 -> fahrenheit);
+
+        fprintf (stdout, "---------------------------------------------------------");
 
         delay (2000); /* wait 2 seconds before next read */
     }
