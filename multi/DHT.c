@@ -1,20 +1,26 @@
-/*
- *  dht.c:
- *    read temperature and humidity from DHT11 or DHT22 sensor
- */
+//
+//  dht.c:
+//    read temperature and humidity from DHT11 or DHT22 sensor
+//
+////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Pre-processor directives
+//
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "DHT.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //
 // Initialize a DHT instance, associating pin with type of component
 //
-int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
+int32_t  DHT_init (DHT **sensor, uint8_t  pin, uint8_t  type)
 {
-    int  len                               = 0;
-    int  status                            = DHTLIB_OK;
+    int32_t  len                           = 0;
+    int32_t  status                        = DHTLIB_OK;
 
     ////////////////////////////////////////////////////////////////////////////////////
     //
@@ -162,15 +168,14 @@ int  DHT_init (DHT **sensor, uint8_t pin, uint8_t type)
 //
 // The complete data tranmission is 40-bits. Higher order bits sent first.
 //
-int  DHT_read (DHT **sensor)
+int32_t  DHT_read (DHT **sensor)
 {
     ////////////////////////////////////////////////////////////////////////////////////
     //
     // Declare and initialize pertinent variables
     //
-    int       index                         = 0;
-    int       status                        = 0;
-    //int       uSec                          = 0;
+    int32_t   index                         = 0;
+    int32_t   status                        = 0;
     uint8_t   bit                           = 0;
     uint8_t   checksum                      = 0;
     uint8_t   counter                       = 0;
@@ -178,8 +183,6 @@ int  DHT_read (DHT **sensor)
     uint8_t   decimal                       = 0;
     uint16_t  integral                      = 0;
     uint16_t  laststate                     = HIGH;
-    //TIMESPEC  start;
-    //TIMESPEC  current;
 
     ////////////////////////////////////////////////////////////////////////////////////
     //

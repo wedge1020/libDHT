@@ -1,26 +1,28 @@
-/***
- *** Filename    : DHT.h
- *** Description : C libDHT multiple sensor library
- ***               Made to substitute for the C++ DHT code in the Freenove tutorial
- *** Author      : Matthew Haas
- *** modification: 2025/10/02
- *** Reference   : https://www.uugear.com/
- ***                   portfolio/dht11-humidity-temperature-sensor-module/
- ***               https://github.com/
- ***                   Qengineering/DHT22-Raspberry-Pi
- ***                   Freenove/Freenove_Ultimate_Starter_Kit_for_Raspberry_Pi/
- ***                       tree/master/Code/C_Code/21.1.1_DHT11
- ***                   RobTillaart/Arduino/tree/master/libraries/DHTlib
- ***
- **************************************************************************************/
+//
+// Filename:    DHT.h
+// Description: C libDHT multiple sensor library
+//              Made to substitute for the C++ DHT code in the Freenove tutorial
+// Reference:   https://www.uugear.com/
+//                  portfolio/dht11-humidity-temperature-sensor-module/
+//              https://github.com/
+//                  Qengineering/DHT22-Raspberry-Pi
+//                  Freenove/Freenove_Ultimate_Starter_Kit_for_Raspberry_Pi/
+//                      tree/master/Code/C_Code/21.1.1_DHT11
+//                  RobTillaart/Arduino/tree/master/libraries/DHTlib
+//
+////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Pre-processor directives
+//
 #ifndef _DHT_H_
 #define _DHT_H_
 
-#include <wiringPi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <wiringPi.h>
 
 #define  TIMING                   0
 #define  STATE                    1
@@ -54,8 +56,8 @@ typedef struct timespec TIMESPEC;
 //
 struct pulse
 {
-    int       timing;
-    int       state;
+    int32_t    timing;
+    int32_t    state;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -65,24 +67,24 @@ struct pulse
 //
 struct dht
 {
-    float     celcius;
-    float     fahrenheit;
-    float     humidity;
-    uint16_t  byte[5];
-    uint16_t *checksum;
-    uint8_t   cached;
-    uint8_t   gpio_pin;
-    uint8_t   type;
-    uint8_t   pulses;
-    Pulse    *signal;
-    int      (*read) (DHT **);
+    float      celcius;
+    float      fahrenheit;
+    float      humidity;
+    uint16_t   byte[5];
+    uint16_t  *checksum;
+    uint8_t    cached;
+    uint8_t    gpio_pin;
+    uint8_t    type;
+    uint8_t    pulses;
+    Pulse     *signal;
+    int32_t    (*read) (DHT **);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //
 // DHT sensor functions (initialize, read)
 //
-int  DHT_init (DHT **, uint8_t, uint8_t);
-int  DHT_read (DHT **);
+int32_t  DHT_init (DHT **, uint8_t, uint8_t);
+int32_t  DHT_read (DHT **);
 
 #endif
