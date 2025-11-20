@@ -72,6 +72,8 @@ int32_t  main (void)
         fprintf (stdout, "Temperature = %.1f *C ",        sensor -> celcius);
         fprintf (stdout, "(%.1f *F)\n",                   sensor -> fahrenheit);
 
+        fprintf (stdout, "-------------------------------------------------------\n");
+
         ////////////////////////////////////////////////////////////////////////////////
         //
         // According to specifications, we must wait at least 2 seconds before the
